@@ -1,0 +1,185 @@
+import http from 'k6/http';
+import { Httpx } from 'https://jslib.k6.io/httpx/0.0.4/index.js';
+import '../config/setup.ts';
+import { recordMetrics } from './metrics-recorder.ts';
+
+const tokenEnv = __ENV.TOKEN;
+
+function createApiClient(config: ApiClientConfig): Httpx {
+    const {
+        baseURL,
+        headers,
+        timeout,
+        authenticationUser,
+        authenticationPassword,
+        authenticationType
+    } = config;
+
+    let session = new Httpx({
+        baseURL: baseURL,
+        headers: headers || {},
+        timeout: timeout || 20000,
+    });
+
+    if (authenticationType) {
+        switch (authenticationType) {
+            case 'BEARER':
+                session.addHeader('Authorization', `Bearer ${tokenEnv}`);
+                break;
+            case 'NONE':
+            default:
+                break;
+        }
+    }
+    return session;
+
+}
+
+export default class RequestRestBase {
+    url: string | null = null;
+    requestService: string | null = null;
+    method: HttpMethod | null = null;
+    jsonBody: string | object | null = null;
+    file: string | ArrayBuffer | null = null;
+    fileName: string | null = null;
+    fileType: string | null = null;
+    headers: Record<string, string> = { 'Content-Type': 'application/json; charset=utf-8' };
+    cookies: Record<string, string> = {};
+    queryParameters: Record<string, any> = {};
+    formParameters: Record<string, any> = {};
+    authenticationType: 'BEARER' | 'NONE' = 'BEARER';
+    authenticationUser: string | null = null
+    authenticationPassword: string | null = null;
+    tag: string | null = null;
+    timeout: number | undefined = undefined;
+
+    constructor() {
+        this.url = null;
+        this.requestService = null;
+        this.method = null;
+        this.jsonBody = null;
+        this.file = null;
+        this.fileName = null;
+        this.fileType = null;
+        this.headers = { 'Content-Type': 'application/json; charset=utf-8' };
+        this.cookies = {};
+        this.queryParameters = {};
+        this.formParameters = {};
+        this.authenticationType = 'BEARER';
+        this.authenticationUser = null;
+        this.authenticationPassword = null;
+        this.tag = null;
+    }
+
+
+    setMethod(method: HttpMethod): void {
+        this.method = method;
+    }
+
+    setFormParameters(parameters: Record<string, any>): void {
+        this.formParameters = parameters;
+        this.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    }
+
+    removeHeader(header: string): void {
+        delete this.headers[header];
+    }
+
+    removeCookie(cookie: string): void {
+        delete this.cookies[cookie];
+    }
+
+    removeQueryParameter(parameter: string): void {
+        delete this.queryParameters[parameter];
+    }
+
+    executeRequest() {
+        const session = createApiClient({
+            baseURL: this.url,
+            headers: this.headers,
+            timeout: this.timeout,
+            authenticationUser: this.authenticationUser,
+            authenticationPassword: this.authenticationPassword,
+            authenticationType: this.authenticationType
+        });
+
+        const response = this._executeRequest(session);
+        recordMetrics(this, response);
+
+        return response;
+    }
+
+    _executeRequest(session: Httpx): ResponseMetrics {
+        if (!this.requestService) {
+            throw new Error('Request service URL is not defined!');
+        }
+
+        if (!this.tag) {
+            throw new Error('Request tag is not defined!');
+        }
+
+        let requestOptions: {
+            headers: Record<string, string>;
+            cookies: Record<string, string>;
+            params: Record<string, any>;
+            files?: Record<string, any>;
+        } = {
+            headers: { ...this.headers },
+            cookies: this.cookies,
+            params: this.queryParameters
+        };
+
+        let body: any;
+
+        if (Object.keys(this.formParameters).length > 0) {
+            body = this.formParameters;
+            requestOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        } else if (this.jsonBody) {
+            body = this.jsonBody;
+            requestOptions.headers['Content-Type'] = 'application/json; charset=utf-8';
+        } else if (this.file) {
+            body = {};
+            requestOptions.files = {};
+            if (this.fileName && this.fileType) {
+                requestOptions.files[this.fileName] = http.file(this.file, this.fileName, this.fileType);
+            }
+        }
+
+        let res: ResponseMetrics;
+
+        switch (this.method) {
+            case 'GET':
+                res = session.get(this.requestService, requestOptions, {
+                    tags: { name: this.tag }
+                });
+                break;
+            case 'POST':
+                res = session.post(this.requestService, body, {
+                    headers: requestOptions.headers,
+                    cookies: requestOptions.cookies,
+                    params: requestOptions.params,
+                    tags: { name: this.tag }
+                });
+                break;
+            case 'PUT':
+                res = session.put(this.requestService, body, {
+                    headers: requestOptions.headers,
+                    cookies: requestOptions.cookies,
+                    params: requestOptions.params,
+                    tags: { name: this.tag }
+                });
+                break;
+            case 'DELETE':
+                res = session.delete(this.requestService, null, {
+                    headers: requestOptions.headers,
+                    cookies: requestOptions.cookies,
+                    params: requestOptions.params,
+                    tags: { name: this.tag }
+                });
+                break;
+            default:
+                throw new Error(`HTTP method ${this.method} not implemented!`);
+        }
+        return res;
+    }
+}

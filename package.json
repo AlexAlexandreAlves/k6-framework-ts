@@ -1,0 +1,13 @@
+{
+  "devDependencies": {
+    "@types/k6": "^1.3.1",
+    "typescript": "^5.9.3"
+  },
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "resolveJsonModule": true
+  },
+  "scripts": {
+    "test:run": "k6 run src/tests/activities/get-activities.test.ts"
+  }
+}
