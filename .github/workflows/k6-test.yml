@@ -56,7 +56,7 @@ jobs:
       - name: Run k6 tests
         run: |
           mkdir -p results
-          npm run test:suite -- --out json=results/output.json
+          npm run test:suite
 
           # Relatório HTML dentro de src/tests
           if [ -f src/tests/report.html ]; then
