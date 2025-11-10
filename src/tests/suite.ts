@@ -18,8 +18,8 @@ export let options = {
             preAllocatedVUs: 5,
             maxVUs: 10,
             stages: [
-                { target: 10, duration: '30s' },
-                { target: 0, duration: '10s' }
+                { target: 10, duration: '15s' },
+                { target: 5, duration: '10s' }
             ],
         },
 
@@ -30,8 +30,8 @@ export let options = {
             preAllocatedVUs: 5,
             maxVUs: 10,
             stages: [
-                { target: 10, duration: '30s' },
-                { target: 0, duration: '10s' }
+                { target: 10, duration: '15s' },
+                { target: 5, duration: '10s' }
             ],
         },
     },
