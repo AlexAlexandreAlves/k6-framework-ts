@@ -1,6 +1,4 @@
-<div style="text-align: center;">
-  <h1>k6 REST Test Framework</h1>
-  <p>A modular architecture for REST API testing using k6.</p>
+<div style="text-align: justify;">
 
 # k6 REST Test Framework
 
@@ -11,54 +9,49 @@ This project provides a modular architecture for REST API testing using [k6](htt
 ```
 calendar-date-automation-test
 ├── src
-│   ├── config/              
-│   ├── constants/
+│   ├── config/                     # Configuration files
+│   │   └── env.json                # Environment variables
+│   │   └── setup.ts                # Setup script for initializing environment
+│   │
+│   ├── constants/                  # Constant files
+│   │   └── constants-example.ts    # Example constants file
+│   │   └── status.ts               # HTTP status codes to use on tests
+│   │
 │   ├── core/
-│   │   └── request-rest-base.js
-│   ├── json-objects/
-│   │   ├── activities/
-│   │   └── authors/
-│   ├── requests/
-│   │   ├── activities/
-│   │   └── authors/
-│   ├── resources
-│   │   ├── csv/
-│   │   ├── json/
-│   │   └── txt/
-│   ├── tests/
+│   │   └── metrics-recorder.ts     # Metrics recorder class
+│   │   └── metrics.ts              # Metrics definitions for k6
+│   │   └── request-rest-base.ts    # Base request class
+│   │
+│   ├── interface/                  # TypeScript interfaces
+│   │   └── IActivities.ts          # Activities interface
+│   │   └── IAuthors.ts             # Authors interface
+│   │
+│   ├── json-objects/               # JSON templates for requests
+│   │   ├── activities/             # Activities JSON objects
+│   │   └── authors/                # Authors JSON objects     
+│   │
+│   ├── requests/                   # Request builders
+│   │   ├── activities/             # Activities requests
+│   │   └── authors/                # Authors requests        
+│   │
+│   ├── resources                   # Resource files         
+│   │   ├── csv/                    # CSV files      
+│   │   ├── json/                   # JSON files     
+│   │   └── txt/                    # TXT files 
+│   │
+│   ├── tests/                      # Test scripts          
 │   │   ├── activities/
 │   │   └── authors/
 │   │   └── examples/
-│   └── utils/
+│   │   └── suite.ts                # Test suite runner
+│   │
+│   ├── types/                      # Type definitions
+│   │   └── k6-global.d.ts          # k6 global types          
+│   │
+│   └── utils/                      # Utility functions        
 ├── .gitignore
 └── README.md
 ```
-
-## Main Components
-
-- **config:**  
-In this folder, we can create every kind of configuration file, such as the env.json that we can set the BASE_URL of the project, or the setup.js that allows us to initialize every env file before run the test.
-
-- **constants:**  
-Constant files to use on the test files.
-
-- **core:**  
-Here we can find the request-rest-base.js, the main and most important file for this architecture.
-
-- **json-objects:**  
-Define the JSON objects to use them in the tests.
-
-- **requests:**  
-The request builder files, when we can setup the request structure, defining the method (e.g. GET, POST, PUT), the URL, the endpoint and etc.
-
-- **resources:**  
-Resources file to use on the tests, such as *.cvs* or *.txt* files.
-
-- **tests:**  
-Folder where our tests have to be created. *In the examples folder, we can find some kind of executors, that can help you to find the best executor when you'll build your test.*
-
-- **utils:**  
-Utils files, which we can create generic methods to use in all projects. 
 
 ## Architecture
 
@@ -79,8 +72,134 @@ You can easily adapt the framework to use either client by modifying the base cl
 
 k6 test script that runs load scenarios and generates an HTML report.
 
-## Initial setup (Windows)
+## Pattern
 
+The project is configured with a modular architecture, that provides easy scalability and maintainability through the **_request-rest-base.ts_** base class. Each request class extends this base class, inheriting common functionality while allowing for specific request implementations. Following this pattern you can create new tests like:
+
+- When creating a new POST or PUT request first create the JSON template in the **_json-objects_** folder.
+- Then, define the request in the **_requests_** folder, extending the base class and using the JSON template if needed.
+
+Example:
+
+```typescript
+import RequestRestBase from "../../core/request-rest-base.ts";
+import { IActivitiesCreate } from "../../interface/IActivities.ts";
+
+const url = __ENV.BASE_URL;
+
+var template = open('../../json-objects/activities/post-activities.json');
+
+export default class PostActivities extends RequestRestBase {
+
+    constructor() {
+        super();
+        this.url = url;
+        this.requestService = `/api/v1/Activities`;
+        this.setMethod('POST');
+        this.tag = 'PostActivities';
+    }
+
+    setJsonBodyFromTemplate(params: IActivitiesCreate): void {
+        this.jsonBody = JSON.stringify({
+            title: params.title,
+            dueDate: params.dueDate,
+            completed: params.completed
+        });
+    }
+}
+```
+- At least one test script should be created in the **_tests_** folder to define the test scenario using the request class.
+
+---
+
+## Native Typescript
+This framework is built using native TypeScript, leveraging its strong typing and modern features to enhance code quality and maintainability. TypeScript's static type checking helps catch errors early in the development process, making it easier to manage complex test scenarios and data structures.
+
+#### The `tsconfig.json` and its importance:
+
+The `tsconfig.json` file is crucial for configuring the TypeScript compiler options for this project. It ensures that the TypeScript code is compiled correctly and adheres to best practices. 
+
+**Why is this important?**
+
+- **k6 compile Typescript natively:** k6 has built-in support for TypeScript, allowing you to write your test scripts in TypeScript without needing a separate build step. The `tsconfig.json` file ensures that the TypeScript code is compiled correctly for k6.
+  - **IDE Support**: Editors like VSCode use `tsconfig.json` to provide features like IntelliSense, error checking, and code navigation, enhancing the development experience.
+  - **Local validation**: Allows verify type errors before to execute k6 tests.
+  - **Consistent configuration**: Ensures that all developers working on the project use the same TypeScript settings, leading to more consistent code.
+
+**How to use it?**
+- The file its already configured and it doesn't need to be changed in most cases.
+- Your editor must detect it automatically when you open the project folder and apply the settings.
+- To check types manually: `npx tsc --noEmit` (without generating output files, only validation).
+
+
+- How to declare types:
+
+  - Global types for k6 are declared in `src/types/k6-global.d.ts`, ensuring that k6-specific globals are recognized by the TypeScript compiler.
+  - Import k6 types in your test files as needed:
+
+    ```typescript
+    import { check, sleep } from 'k6';
+    import http from 'k6/http';
+    ```
+  - Use native types in methods/functions:
+  - Example of a function with typed parameters and return type:
+
+    ```typescript
+    function createActivity(title: string, dueDate: string, completed: boolean): IActivitiesCreate {
+        return {
+            title,
+            dueDate,
+            completed
+        };
+    }
+    ``` 
+
+- Recommended parameter pattern:
+
+  - Choose to accept a single typed object `params` instead of multiple primitive parameters for better scalability and readability.
+
+    ```typescript
+    interface ICreateActivityParams {
+        title: string;
+        dueDate: string;
+        completed: boolean;
+    }
+
+    function createActivity(params: ICreateActivityParams): IActivitiesCreate {
+        return {
+            title: params.title,
+            dueDate: params.dueDate,
+            completed: params.completed
+        };
+    }
+    ```
+
+    - Valuable types:
+      
+      - In k6 handlers, use `any` when necessary:
+        ```typescript
+        export function handleResponse(response: any): void {
+            // Process the response
+        }
+        ```
+
+- How to declare interfaces
+
+  - Custom interfaces for request and response payloads are defined in the `src/interface/` directory, promoting strong typing and code clarity.
+  - Example of an interface declaration:
+
+    ```typescript
+    export interface IActivitiesCreate {
+        title: string;
+        dueDate: string;
+        completed: boolean;
+    }
+    ```
+---
+
+## Initial setup 
+
+- **Windows OS instructions**
 These instructions will help you prepare the environment to run this project using TypeScript and the k6 runtime.
 
 1) Install k6 v1.2.2
@@ -103,6 +222,12 @@ choco install k6 --version=1.2.2 -y
 ```powershell
 k6 version
 ```
+
+- Or **MACS OS / Linux OS instructions**
+  
+  - Follow the official k6 installation guide: https://k6.io/docs/getting-started/installation/
+  
+  
 
 2) Initialize Node / TypeScript in the project
 
@@ -174,3 +299,5 @@ After execution, an HTML report is automatically generated (e.g., report.html).
 ## References
 - k6 Documentation
 - k6 Reporter
+
+</div>
