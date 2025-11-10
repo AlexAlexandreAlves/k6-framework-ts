@@ -59,8 +59,8 @@ jobs:
           npm run test:suite
 
           # Relatório HTML dentro de src/tests
-          if [ -f src/tests/report.html ]; then
-            mv src/tests/report.html results/
+          if [ -f relatorio.html ]; then
+            mv relatorio.html results/
           fi
 
       - name: Upload test results
