@@ -18,18 +18,21 @@ export let options = {
 }
 
 
-const id = Utils.readCsv('id-activity.csv');
+const id = Utils.readCsv('id-activity.csv', false);
 
 export default function getActivityById() {
 
     const randomId = randomItem(id);
-    const request = new GetActivityById(randomId);
+    const request = new GetActivityById(String(randomId));
+
     const response = request.executeRequest();
 
     check(response, {
         'Body is not null': (r) => r.body != null,
          "status is 200": (r) => r.status === 200,
     });
+
+    console.log(response.status);
 };
 
 export function handleSummary(data : any) {

@@ -21,7 +21,7 @@ export let options = {
 
 const authorsDataDriven = Utils.readCsv('post-author.csv');
 
-export default function sendAuthor() {
+export default function createAuthor() {
     const authorData = randomItem(authorsDataDriven);
     const request = new PostAuthors();
 

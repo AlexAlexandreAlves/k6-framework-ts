@@ -8,6 +8,7 @@
     "resolveJsonModule": true
   },
   "scripts": {
-    "test:run": "k6 run src/tests/activities/get-activities.test.ts"
+    "test:run": "k6 run src/tests/activities/get-activities.test.ts",
+    "test:suite": "k6 run src/tests/suite.ts"
   }
 }

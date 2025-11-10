@@ -1,7 +1,7 @@
 import { group } from "k6";
 import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
-import updateActivity from './activities/put-activities.test.ts';
-import sendAuthor from './authors/post-author.test.ts';
+import createAuthor from './authors/post-author.test.ts';
+import createActivity from "./activities/post-activities.test.ts";
 
 
 /**
@@ -12,40 +12,44 @@ If you want to control the Load through the suite.ts, you have to unconsider the
 export let options = {
     scenarios: {
         createActivity: {
-            executor: 'constant-arrival-rate',
-            rate: 5,
+            executor: 'ramping-arrival-rate',
+            exec: 'createActivitySuite',
             timeUnit: '1s',
-            duration: '30s',
             preAllocatedVUs: 5,
             maxVUs: 10,
-            stages: [{ target: 10, duration: '30s' }, { target: 0, duration: '10s' }]
-        }
-    },
+            stages: [
+                { target: 10, duration: '30s' },
+                { target: 0, duration: '10s' }
+            ],
+        },
 
-    createAuthor: {
-        executor: 'constant-arrival-rate',
-        rate: 5,
-        timeUnit: '1s',
-        duration: '30s',
-        preAllocatedVUs: 5,
-        maxVUs: 10,
-        stages: [{ target: 10, duration: '30s' }, { target: 0, duration: '10s' }]
-    }
+        createAuthor: {
+            executor: 'ramping-arrival-rate',
+            exec: 'createAuthorSuite',
+            timeUnit: '1s',
+            preAllocatedVUs: 5,
+            maxVUs: 10,
+            stages: [
+                { target: 10, duration: '30s' },
+                { target: 0, duration: '10s' }
+            ],
+        },
+    },
 };
 
-export function createActivity() {
+export function createActivitySuite(): void {
     group('Create Activity', () => {
-        updateActivity();
+        createActivity();
     });
 }
 
-export function createAuthor() {
+export function createAuthorSuite(): void {
     group('Create Author', () => {
-        sendAuthor();
+        createAuthor();
     });
 }
 
-export function handleSummary(data: any) {
+export function handleSummary(data: any): Record<string, string> {
     return {
         'relatorio.html': htmlReport(data)
     };

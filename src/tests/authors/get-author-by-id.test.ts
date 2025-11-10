@@ -18,13 +18,14 @@ export let options = {
     }
 }
 
-const id = Utils.readCsv('id-author.csv');
+const id = Utils.readCsv('id-author.csv', false);
+
 
 export default function getAuthorById() {
 
     const randomId = randomItem(id);
 
-    const request = new GetAuthorById(randomId);
+    const request = new GetAuthorById(String(randomId));
     const response = request.executeRequest();
 
     check(response, {

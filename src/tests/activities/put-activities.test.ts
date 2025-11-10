@@ -26,7 +26,6 @@ export default function updateActivity() {
     const randomId = randomItem(id);
 
     const request = new UpdateActivities(String(randomId));
-    console.log("Updating activity with ID: " + randomId);
     const updateActivity: IActivitiesUpdate = {
         title: "Generic title updated",
         completed: false

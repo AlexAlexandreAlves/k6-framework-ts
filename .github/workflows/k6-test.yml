@@ -1,0 +1,50 @@
+name: K6 Performance Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  k6-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install k6 v1.2.2
+        run: |
+          # Install dependencies
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates curl tar
+          # Download and install k6 v1.2.2 from official releases
+          K6_VERSION=1.2.2
+          curl -sLo k6.tar.gz "https://dl.k6.io/releases/v${K6_VERSION}/k6-v${K6_VERSION}-linux64.tar.gz"
+          tar -xzf k6.tar.gz
+          sudo mv "k6-v${K6_VERSION}-linux64/k6" /usr/local/bin/k6
+          rm -rf k6.tar.gz "k6-v${K6_VERSION}-linux64"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install project dev dependencies
+        run: |
+          npm install
+
+      - name: Run k6 tests (direct .ts)
+        run: |
+          mkdir -p results
+          # Run the test suite using the same command you use locally.
+          # Pass through k6 args after `--` to npm so we can capture results JSON.
+          npm run test:suite -- --out json=results/output.json
+          if [ -f report.html ]; then mv report.html results/; fi
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results
+          path: results/
