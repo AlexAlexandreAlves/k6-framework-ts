@@ -1,3 +1,7 @@
+<div style="text-align: center;">
+  <h1>k6 REST Test Framework</h1>
+  <p>A modular architecture for REST API testing using k6.</p>
+
 # k6 REST Test Framework
 
 This project provides a modular architecture for REST API testing using [k6](https://k6.io/). It helps organize test scenarios, input data, and reporting in a scalable and maintainable way.
@@ -59,7 +63,7 @@ Utils files, which we can create generic methods to use in all projects.
 ## Architecture
 
 This framework uses the [HTTPX library](https://jslib.k6.io/httpx/) for advanced HTTP client features, such as session management, custom headers, and flexible authentication.  
-The base class (`src/core/request-rest-base.js`) is designed to support both the native k6 `http` module and HTTPX, allowing you to switch between them depending on your testing needs.
+The base class (`src/core/request-rest-base.ts`) is designed to support both the native k6 `http` module and HTTPX, allowing you to switch between them depending on your testing needs.
 
 - **HTTPX Advantages:**  
   - Session persistence across requests  
@@ -120,10 +124,11 @@ Create or update `tsconfig.json` at the project root with the following recommen
     "allowImportingTsExtensions": true,
     "target": "ES2020",
     "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
     "allowJs": false,
     "esModuleInterop": true,
     "isolatedModules": true,
-    "resolveJsonModule": true,
     "noEmit": true,
     "skipLibCheck": true
   },
