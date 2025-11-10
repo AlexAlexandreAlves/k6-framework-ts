@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download node_modules from build  
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: node_modules
           path: ./
@@ -82,7 +82,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download test results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: k6-results
           path: results
